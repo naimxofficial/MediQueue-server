@@ -30,10 +30,29 @@ async function run() {
 
 
         // Get 6 tutors for home page
-        app.get('/tutors', async (req, res) => {
+        app.get('/featured', async (req, res) => {
             const tutors = await tutorsCollection.aggregate([{ $limit: 6 }]).toArray()
             res.send(tutors)
         })
+
+        app.get('/tutors', async (req, res) => {
+            const { search, startDate, endDate } = req.query
+            const query = {}
+
+            if (search) {
+                query.name = { $regex: search, $options: 'i' }
+            }
+            if (startDate || endDate) {
+                query.registeredAt = {}
+                if (startDate) query.registeredAt.$gte = startDate
+                if (endDate) query.registeredAt.$lte = endDate
+            }
+
+            const tutors = await tutorsCollection.find(query).toArray()
+            res.send(tutors)
+        })
+
+
     } finally {
 
         // await client.close();
