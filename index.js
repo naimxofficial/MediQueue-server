@@ -1,3 +1,6 @@
+const dns = require("node:dns");
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
 const express = require('express')
 const dotenv = require('dotenv')
 const cors = require('cors');
@@ -12,7 +15,6 @@ const PORT = process.env.PORT
 app.use(cors())
 app.use(express.json())
 
-
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -23,18 +25,17 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         await client.connect();
-
-        // await client.db("admin").command({ ping: 1 });
-        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
         const db = client.db('mediqueue')
         const tutorsCollection = db.collection('tutors')
 
+
+        // Get 6 tutors for home page
         app.get('/tutors', async (req, res) => {
-            const tutors = await tutorsCollection.find().toArray()
+            const tutors = await tutorsCollection.aggregate([{ $limit: 6 }]).toArray()
             res.send(tutors)
-        })  
+        })
     } finally {
-        
+
         // await client.close();
     }
 }
