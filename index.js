@@ -133,6 +133,54 @@ async function run() {
             }
         });
 
+
+        // DELETE a tutor
+        app.delete('/my-tutors/:id', async (req, res) => {
+            try {
+                const result = await myTutorsCollection.deleteOne({
+                    _id: new ObjectId(req.params.id)
+                });
+
+                if (result.deletedCount === 0) {
+                    return res.status(404).json({ error: "Tutor not found" });
+                }
+
+                res.json({ success: true, message: "Tutor deleted successfully" });
+            } catch (error) {
+                console.error("Delete error:", error);
+                res.status(500).json({ error: "Failed to delete tutor" });
+            }
+        });
+
+        // UPDATE a tutor
+        app.put('/my-tutors/:id', async (req, res) => {
+            try {
+                const { _id, createdAt, ...updateData } = req.body;
+
+                const processedData = {
+                    ...updateData,
+                    totalSlot: parseInt(updateData.totalSlot) || 0,
+                    hourlyRate: parseFloat(updateData.hourlyRate) || 0,
+                    experience: parseInt(updateData.experience) || 0,
+                    updatedAt: new Date()
+                };
+
+                const result = await myTutorsCollection.updateOne(
+                    { _id: new ObjectId(req.params.id) },
+                    { $set: processedData }
+                );
+
+                if (result.modifiedCount === 0) {
+                    return res.status(404).json({ error: "Tutor not found or no changes made" });
+                }
+
+                res.json({ success: true, message: "Tutor updated successfully" });
+            } catch (error) {
+                console.error("Update error:", error);
+                res.status(500).json({ error: "Failed to update tutor" });
+            }
+        });
+
     } finally {
 
         // await client.close();
