@@ -5,6 +5,7 @@ const express = require('express')
 const dotenv = require('dotenv')
 const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const { ObjectId } = require('mongodb')
 
 dotenv.config()
 const uri = process.env.MONGODB_URI
@@ -27,6 +28,7 @@ async function run() {
         await client.connect();
         const db = client.db('mediqueue')
         const tutorsCollection = db.collection('tutors')
+        const bookingsCollection = db.collection('bookings')
 
 
         // Get 6 tutors for home page
@@ -51,7 +53,74 @@ async function run() {
             const tutors = await tutorsCollection.find(query).toArray()
             res.send(tutors)
         })
+        app.get('/tutors/:id', async (req, res) => {
+            const tutor = await tutorsCollection.findOne({ _id: new ObjectId(req.params.id) })
+            res.send(tutor)
+        })
+        // Save booking
+        app.post('/bookings', async (req, res) => {
+            try {
+                const booking = req.body
 
+                const result = await bookingsCollection.insertOne({
+                    ...booking,
+                    createdAt: new Date()
+                })
+
+                res.status(201).json(result)
+            } catch (error) {
+                console.error("Booking error:", error)
+                res.status(500).json({ error: "Failed to create booking" })
+            }
+        })
+
+        // Decrease slot
+        app.patch('/tutors/:id/decrease-slot', async (req, res) => {
+            try {
+
+                const result = await tutorsCollection.updateOne(
+                    { _id: new ObjectId(req.params.id) },
+                    { $inc: { totalSlot: -1 } }
+                )
+
+                if (result.modifiedCount === 0) {
+                    return res.status(404).json({ error: "Tutor not found" })
+                }
+
+                res.json(result)
+            } catch (error) {
+                console.error("Decrease slot error:", error)
+                res.status(500).json({ error: "Failed to update slot" })
+            }
+        })
+        // Save new tutor profile
+        app.post('/tutors', async (req, res) => {
+            try {
+                const tutorData = req.body
+
+                // Add a timestamp and ensure numeric fields are properly formatted
+                const newTutor = {
+                    ...tutorData,
+                    totalSlots: parseInt(tutorData.totalSlots) || 0,
+                    hourlyRate: parseFloat(tutorData.hourlyRate) || 0,
+                    experience: parseInt(tutorData.experience) || 0,
+                    createdAt: new Date(),
+                    // If you want to use the 'registeredAt' field for your existing search filter:
+                    registeredAt: new Date().toISOString() 
+                }
+
+                const result = await tutorsCollection.insertOne(newTutor)
+
+                res.status(201).json({
+                    success: true,
+                    message: "Tutor profile created successfully",
+                    data: result
+                })
+            } catch (error) {
+                console.error("Create tutor error:", error)
+                res.status(500).json({ error: "Failed to create tutor profile" })
+            }
+        })
 
     } finally {
 
