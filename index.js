@@ -181,6 +181,46 @@ async function run() {
             }
         });
 
+        // GET My Booked Sessions
+        app.get('/bookings', async (req, res) => {
+            try {
+                const userId = req.user?.id;
+
+                const bookings = await bookingsCollection.find({
+                    studentId: userId
+                })
+                    .sort({ date: -1 })
+                    .toArray();
+
+                res.send(bookings);
+            } catch (error) {
+                console.error("Error fetching bookings:", error);
+                res.status(500).json({ error: "Failed to fetch bookings" });
+            }
+        });
+
+        //(Cancel)
+app.patch('/bookings/:id/cancel', async (req, res) => {
+    try {
+        const result = await bookingsCollection.updateOne(
+            { _id: new ObjectId(req.params.id) },
+            { $set: { 
+                status: "cancelled", 
+                bookStatus: "cancelled",
+                cancelledAt: new Date() 
+            }}
+        );
+
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
+
+        res.json({ success: true, message: "Booking cancelled successfully" });
+    } catch (error) {
+        console.error("Cancel booking error:", error);
+        res.status(500).json({ error: "Failed to cancel booking" });
+    }
+});
     } finally {
 
         // await client.close();
