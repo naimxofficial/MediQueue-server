@@ -29,6 +29,7 @@ async function run() {
         const db = client.db('mediqueue')
         const tutorsCollection = db.collection('tutors')
         const bookingsCollection = db.collection('bookings')
+        const myTutorsCollection = db.collection('myTutors')
 
 
         // Get 6 tutors for home page
@@ -94,33 +95,43 @@ async function run() {
             }
         })
         // Save new tutor profile
-        app.post('/tutors', async (req, res) => {
+        app.post('/my-tutors', async (req, res) => {
             try {
-                const tutorData = req.body
+                const { totalSlot, hourlyRate, experience, ...rest } = req.body
 
-                // Add a timestamp and ensure numeric fields are properly formatted
                 const newTutor = {
-                    ...tutorData,
-                    totalSlots: parseInt(tutorData.totalSlots) || 0,
-                    hourlyRate: parseFloat(tutorData.hourlyRate) || 0,
-                    experience: parseInt(tutorData.experience) || 0,
+                    ...rest,
+                    totalSlot: parseInt(totalSlot) || 0,
+                    hourlyRate: parseFloat(hourlyRate) || 0,
+                    experience: parseInt(experience) || 0,
                     createdAt: new Date(),
-                    // If you want to use the 'registeredAt' field for your existing search filter:
-                    registeredAt: new Date().toISOString() 
+                    registeredAt: new Date().toISOString()
                 }
 
-                const result = await tutorsCollection.insertOne(newTutor)
+                const result = await myTutorsCollection.insertOne(newTutor)
 
                 res.status(201).json({
                     success: true,
-                    message: "Tutor profile created successfully",
+                    message: "Tutor added to your list",
                     data: result
                 })
             } catch (error) {
-                console.error("Create tutor error:", error)
-                res.status(500).json({ error: "Failed to create tutor profile" })
+                res.status(500).json({ error: "Failed to add tutor" })
             }
         })
+        app.get('/my-tutors', async (req, res) => {
+            try {
+                const userId = req.user?.id;
+                const myTutors = await myTutorsCollection.find({ userId })
+                    .sort({ createdAt: -1 })
+                    .toArray();
+
+                res.send(myTutors);
+            } catch (error) {
+                console.error("Error fetching my tutors:", error);
+                res.status(500).json({ error: "Failed to fetch tutors" });
+            }
+        });
 
     } finally {
 
