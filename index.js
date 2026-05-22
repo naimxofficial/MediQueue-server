@@ -23,6 +23,25 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
+const verifyToken = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: "Unauthorized: No token provided" });
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+        const response = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/jwks`);
+        const { keys } = await response.json();
+        const { createRemoteJWKSet, jwtVerify } = await import('jose');
+        const JWKS = createRemoteJWKSet(new URL(`${process.env.BETTER_AUTH_URL}/api/auth/jwks`));
+        const { payload } = await jwtVerify(token, JWKS);
+        req.user = { id: payload.sub, email: payload.email };
+        next();
+    } catch (err) {
+        return res.status(403).json({ error: "Forbidden: Invalid or expired token" });
+    }
+};
 async function run() {
     try {
         await client.connect();
