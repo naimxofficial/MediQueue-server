@@ -11,7 +11,7 @@ dotenv.config()
 const uri = process.env.MONGODB_URI
 
 const app = express()
-const PORT = process.env.PORT
+const PORT = process.env.PORT;
 
 app.use(cors())
 app.use(express.json())
@@ -24,27 +24,10 @@ const client = new MongoClient(uri, {
     }
 });
 
-const verifyToken = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: "Unauthorized: No token provided" });
-    }
-    const token = authHeader.split(' ')[1];
-    try {
-        const response = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/jwks`);
-        const { keys } = await response.json();
-        const { createRemoteJWKSet, jwtVerify } = await import('jose');
-        const JWKS = createRemoteJWKSet(new URL(`${process.env.BETTER_AUTH_URL}/api/auth/jwks`));
-        const { payload } = await jwtVerify(token, JWKS);
-        req.user = { id: payload.sub, email: payload.email };
-        next();
-    } catch (err) {
-        return res.status(403).json({ error: "Forbidden: Invalid or expired token" });
-    }
-};
+
 async function run() {
     try {
-        await client.connect();
+        // await client.connect();
         const db = client.db('mediqueue')
         const tutorsCollection = db.collection('tutors')
         const bookingsCollection = db.collection('bookings')
@@ -219,27 +202,29 @@ async function run() {
         });
 
         //(Cancel)
-app.patch('/bookings/:id/cancel', async (req, res) => {
-    try {
-        const result = await bookingsCollection.updateOne(
-            { _id: new ObjectId(req.params.id) },
-            { $set: { 
-                status: "cancelled", 
-                bookStatus: "cancelled",
-                cancelledAt: new Date() 
-            }}
-        );
+        app.patch('/bookings/:id/cancel', async (req, res) => {
+            try {
+                const result = await bookingsCollection.updateOne(
+                    { _id: new ObjectId(req.params.id) },
+                    {
+                        $set: {
+                            status: "cancelled",
+                            bookStatus: "cancelled",
+                            cancelledAt: new Date()
+                        }
+                    }
+                );
 
-        if (result.modifiedCount === 0) {
-            return res.status(404).json({ error: "Booking not found" });
-        }
+                if (result.modifiedCount === 0) {
+                    return res.status(404).json({ error: "Booking not found" });
+                }
 
-        res.json({ success: true, message: "Booking cancelled successfully" });
-    } catch (error) {
-        console.error("Cancel booking error:", error);
-        res.status(500).json({ error: "Failed to cancel booking" });
-    }
-});
+                res.json({ success: true, message: "Booking cancelled successfully" });
+            } catch (error) {
+                console.error("Cancel booking error:", error);
+                res.status(500).json({ error: "Failed to cancel booking" });
+            }
+        });
     } finally {
 
         // await client.close();
