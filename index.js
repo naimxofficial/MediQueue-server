@@ -6,7 +6,7 @@ const dotenv = require('dotenv')
 const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const { ObjectId } = require('mongodb')
-
+const nodemailer = require('nodemailer');
 dotenv.config()
 const uri = process.env.MONGODB_URI
 
@@ -23,6 +23,14 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+})
 
 
 async function run() {
@@ -225,6 +233,25 @@ async function run() {
                 res.status(500).json({ error: "Failed to cancel booking" });
             }
         });
+
+
+        //send email
+        app.post('/api/send-email', (req, res) => {
+            
+            const { name, email } = req.query;
+            console.log(name, email)
+
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: email,
+                subject: 'Welcome to MediQueue - Tutor Booking Platform',
+                html: `<h1>Honourable ${name}</h1>
+                <p>Thank you for registering on MediQueue platform. We are excited to have you on board!</p>`
+            }
+            transporter.sendMail(mailOptions)
+        })
+
+
     } finally {
 
         // await client.close();
