@@ -5,6 +5,7 @@
 This is the Express.js backend for MediQueue. It handles all tutor listings, session bookings, cancellations, and CRUD operations — connected to a MongoDB database and deployed on Vercel.
 
 🌐 **Live API:** [https://mediqueue-server-beta.vercel.app/](https://mediqueue-server-beta.vercel.app/)
+
 🖥️ **Frontend:** [https://mediqueue-puce.vercel.app/](https://mediqueue-puce.vercel.app/)
 
 ---
@@ -45,7 +46,7 @@ This is the Express.js backend for MediQueue. It handles all tutor listings, ses
 | ❌ **Session Cancellation** | Marks booking as cancelled with a `cancelledAt` timestamp |
 | 🧹 **Data Sanitization** | Parses `totalSlot`, `hourlyRate`, and `experience` as correct numeric types on save |
 | 🌐 **CORS Enabled** | Accepts cross-origin requests from the frontend |
-| 🔒 **JWT Ready** | `jsonwebtoken` and `jose` installed for future auth middleware |
+| 📨 **Automatic Email** | Automatically email sends after creating registering on the website |
 
 ---
 
@@ -55,7 +56,7 @@ This is the Express.js backend for MediQueue. It handles all tutor listings, ses
 ![Express](https://img.shields.io/badge/Express-5-000000?style=flat&logo=express&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat&logo=mongodb&logoColor=white)
 ![dotenv](https://img.shields.io/badge/dotenv-ECD53F?style=flat&logo=dotenv&logoColor=black)
-![JWT](https://img.shields.io/badge/JWT-000000?style=flat&logo=jsonwebtokens&logoColor=white)
+![Nodemailer](https://img.shields.io/badge/Nodemailer-6-4B8505?logo=nodedotjs)
 ![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-000000?style=flat&logo=vercel&logoColor=white)
 
 ---
@@ -65,6 +66,10 @@ This is the Express.js backend for MediQueue. It handles all tutor listings, ses
 Create a `.env` file in the root:
 
 ```env
-MONGODB_URI=your_mongodb_connection_string
-PORT=5000
+PORT=
+MONGODB_URI=
+BETTER_AUTH_URL=
+CLIENT_URL=
+EMAIL_USER=
+EMAIL_PASS=
 ```
